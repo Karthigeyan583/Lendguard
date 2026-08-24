@@ -14,7 +14,9 @@ class LendGuardApp {
 
   init() {
     this.initTheme();
+    this.initAuth();
     this.setupEventListeners();
+    this.setupOTPBoxListeners();
     this.renderDashboard();
     this.renderSecurityCenter();
     this.initStandaloneCalculator();
@@ -28,7 +30,7 @@ class LendGuardApp {
   }
 
   initTheme() {
-    const savedTheme = localStorage.getItem('lendguard_theme') ||
+    const savedTheme = localStorage.getItem('lendguard_theme') || 
       (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     this.setTheme(savedTheme);
   }
@@ -41,7 +43,7 @@ class LendGuardApp {
       document.documentElement.removeAttribute('data-theme');
     }
     localStorage.setItem('lendguard_theme', theme);
-
+    
     const themeBtn = document.getElementById('btnToggleTheme');
     if (themeBtn) {
       themeBtn.innerHTML = theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
@@ -141,7 +143,7 @@ class LendGuardApp {
     const loanForm = document.getElementById('loanForm');
     if (loanForm) {
       loanForm.addEventListener('submit', (e) => this.handleLoanFormSubmit(e));
-
+      
       // Dynamic calculations inside add modal
       const calcInputs = ['loanPrincipal', 'loanInterestType', 'loanInterestRate', 'loanTenureMonths', 'loanStartDate'];
       calcInputs.forEach(id => {
@@ -235,7 +237,7 @@ class LendGuardApp {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-
+    
     let icon = 'ℹ️';
     if (type === 'success') icon = '✅';
     if (type === 'error') icon = '⚠️';
@@ -290,13 +292,13 @@ class LendGuardApp {
     if (!grid) return;
 
     const loans = window.StorageManager.getLoans();
-
+    
     // Filter logic
     const filtered = loans.filter(loan => {
       const metrics = LoanEngine.calculateLoanMetrics(loan);
-
+      
       // Search matching
-      const matchesSearch = !this.searchQuery ||
+      const matchesSearch = !this.searchQuery || 
         loan.borrowerName.toLowerCase().includes(this.searchQuery) ||
         (loan.tag && loan.tag.toLowerCase().includes(this.searchQuery)) ||
         (loan.notes && loan.notes.toLowerCase().includes(this.searchQuery));
@@ -1003,6 +1005,332 @@ class LendGuardApp {
   closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
+  }
+
+  /* ================= AUTHENTICATION PORTAL CONTROLLER ================= */
+  initAuth() {
+    const session = window.Auth.getSession();
+    const portal = document.getElementById('authPortal');
+    const greeting = document.getElementById('topbarUserGreeting');
+    const profileName = document.getElementById('userProfileName');
+
+    if (session) {
+      if (portal) portal.classList.add('hidden');
+      if (profileName) profileName.textContent = session.name || session.email || 'User';
+      if (greeting) greeting.textContent = `Welcome back, ${session.name || 'Lender'}`;
+    } else {
+      if (portal) portal.classList.remove('hidden');
+    }
+
+    // Password strength meter listener
+    const passInput = document.getElementById('authPasswordInput');
+    if (passInput) {
+      passInput.addEventListener('input', () => {
+        if (window.Auth.view === 'signup') {
+          const analysis = window.Auth.analyzePassword(passInput.value);
+          const fill = document.getElementById('passStrengthFill');
+          const label = document.getElementById('passStrengthLabel');
+          if (fill) {
+            fill.style.width = `${analysis.percent}%`;
+            fill.style.backgroundColor = analysis.color;
+          }
+          if (label) {
+            label.textContent = `Strength: ${analysis.label}`;
+            label.style.color = analysis.color;
+          }
+        }
+      });
+    }
+  }
+
+  setAuthView(view) {
+    window.Auth.view = view;
+    
+    // Update Tab Buttons
+    document.getElementById('tabBtnSignIn')?.classList.toggle('active', view === 'signin');
+    document.getElementById('tabBtnSignUp')?.classList.toggle('active', view === 'signup');
+    document.getElementById('tabBtnForgot')?.classList.toggle('active', view === 'forgot');
+
+    // Element Visibility
+    const nameGroup = document.getElementById('authNameGroup');
+    const confirmGroup = document.getElementById('authConfirmPasswordGroup');
+    const passStrength = document.getElementById('passStrengthContainer');
+    const modeSelector = document.getElementById('modeSelectorGroup');
+    const rememberGroup = document.getElementById('rememberMeGroup');
+    const inlineForgot = document.getElementById('linkForgotPassInline');
+    const submitBtn = document.getElementById('btnAuthSubmit');
+    const passLabel = document.getElementById('authPasswordLabel');
+
+    if (view === 'signin') {
+      if (nameGroup) nameGroup.style.display = 'none';
+      if (confirmGroup) confirmGroup.style.display = 'none';
+      if (passStrength) passStrength.style.display = 'none';
+      if (modeSelector) modeSelector.style.display = 'flex';
+      if (rememberGroup) rememberGroup.style.display = 'block';
+      if (inlineForgot) inlineForgot.style.display = 'inline';
+      if (passLabel) passLabel.innerHTML = 'Password <span class="required">*</span>';
+      if (submitBtn) submitBtn.textContent = 'Sign In to Vault';
+      this.setAuthMode(window.Auth.mode);
+    } else if (view === 'signup') {
+      if (nameGroup) nameGroup.style.display = 'block';
+      if (confirmGroup) confirmGroup.style.display = 'block';
+      if (passStrength) passStrength.style.display = 'block';
+      if (modeSelector) modeSelector.style.display = 'none';
+      if (rememberGroup) rememberGroup.style.display = 'block';
+      if (inlineForgot) inlineForgot.style.display = 'none';
+      if (passLabel) passLabel.innerHTML = 'Create Password <span class="required">*</span>';
+      if (submitBtn) submitBtn.textContent = 'Create Free Account';
+      
+      // On signup, show password fields
+      document.getElementById('authPasswordGroup').style.display = 'block';
+      document.getElementById('authOTPSection').style.display = 'none';
+    } else if (view === 'forgot') {
+      if (nameGroup) nameGroup.style.display = 'none';
+      if (confirmGroup) confirmGroup.style.display = 'block';
+      if (passStrength) passStrength.style.display = 'none';
+      if (modeSelector) modeSelector.style.display = 'none';
+      if (rememberGroup) rememberGroup.style.display = 'none';
+      if (inlineForgot) inlineForgot.style.display = 'none';
+      if (passLabel) passLabel.innerHTML = 'Enter New Password <span class="required">*</span>';
+      if (submitBtn) submitBtn.textContent = 'Verify OTP & Reset Password';
+
+      // Forgot password requires OTP verification
+      document.getElementById('authPasswordGroup').style.display = 'block';
+      document.getElementById('authOTPSection').style.display = 'block';
+    }
+  }
+
+  setAuthChannel(channel) {
+    window.Auth.channel = channel;
+    document.getElementById('pillEmail')?.classList.toggle('active', channel === 'email');
+    document.getElementById('pillPhone')?.classList.toggle('active', channel === 'phone');
+
+    const emailGroup = document.getElementById('authEmailGroup');
+    const phoneGroup = document.getElementById('authPhoneGroup');
+
+    if (channel === 'email') {
+      if (emailGroup) emailGroup.style.display = 'block';
+      if (phoneGroup) phoneGroup.style.display = 'none';
+    } else {
+      if (emailGroup) emailGroup.style.display = 'none';
+      if (phoneGroup) phoneGroup.style.display = 'block';
+    }
+  }
+
+  setAuthMode(mode) {
+    window.Auth.mode = mode;
+    document.getElementById('pillPassword')?.classList.toggle('active', mode === 'password');
+    document.getElementById('pillOTP')?.classList.toggle('active', mode === 'otp');
+
+    const passGroup = document.getElementById('authPasswordGroup');
+    const otpSection = document.getElementById('authOTPSection');
+    const submitBtn = document.getElementById('btnAuthSubmit');
+
+    if (mode === 'password') {
+      if (passGroup) passGroup.style.display = 'block';
+      if (otpSection) otpSection.style.display = 'none';
+      if (submitBtn) submitBtn.textContent = 'Sign In with Password';
+    } else {
+      if (passGroup) passGroup.style.display = 'none';
+      if (otpSection) otpSection.style.display = 'block';
+      if (submitBtn) submitBtn.textContent = 'Verify OTP & Sign In';
+    }
+  }
+
+  togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  }
+
+  setupOTPBoxListeners() {
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val && idx < boxes.length - 1) {
+          boxes[idx + 1].focus();
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !box.value && idx > 0) {
+          boxes[idx - 1].focus();
+        }
+      });
+    });
+  }
+
+  requestOTP() {
+    const isEmail = window.Auth.channel === 'email';
+    const identifier = isEmail 
+      ? document.getElementById('authEmailInput')?.value.trim() 
+      : document.getElementById('authPhoneInput')?.value.trim();
+
+    if (!identifier) {
+      this.showToast(`Please enter your ${isEmail ? 'email address' : 'mobile number'} first`, 'error');
+      return;
+    }
+
+    const code = window.Auth.generateOTP(identifier);
+
+    // Show simulated code banner for quick copying / verification
+    const banner = document.getElementById('otpSimBanner');
+    const codeDisplay = document.getElementById('otpSimCodeDisplay');
+    if (banner) banner.style.display = 'flex';
+    if (codeDisplay) codeDisplay.textContent = code;
+
+    this.showToast(`6-digit OTP sent to ${identifier}! Check simulated banner.`, 'success');
+
+    // Auto-focus first box
+    const firstBox = document.querySelector('.otp-box[data-idx="0"]');
+    if (firstBox) firstBox.focus();
+  }
+
+  autoFillOTP() {
+    if (!window.Auth.activeOTP) return;
+    const digits = window.Auth.activeOTP.split('');
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach((box, idx) => {
+      box.value = digits[idx] || '';
+    });
+    this.showToast('OTP auto-filled!', 'info');
+  }
+
+  getEnteredOTP() {
+    const boxes = document.querySelectorAll('.otp-box');
+    return Array.from(boxes).map(b => b.value).join('');
+  }
+
+  async handleAuthSubmit(e) {
+    e.preventDefault();
+    const isEmail = window.Auth.channel === 'email';
+    const identifier = isEmail 
+      ? document.getElementById('authEmailInput')?.value.trim() 
+      : document.getElementById('authPhoneInput')?.value.trim();
+
+    if (!identifier) {
+      this.showToast(`Please enter your ${isEmail ? 'email address' : 'mobile phone number'}`, 'error');
+      return;
+    }
+
+    const remember = document.getElementById('chkRememberMe')?.checked ?? true;
+
+    try {
+      if (window.Auth.view === 'signin') {
+        if (window.Auth.mode === 'password') {
+          const pass = document.getElementById('authPasswordInput')?.value;
+          if (!pass) {
+            this.showToast('Please enter your password', 'error');
+            return;
+          }
+          const user = await window.Auth.signInWithPassword(identifier, pass, remember);
+          this.showToast(`Welcome back, ${user.name || 'Lender'}!`, 'success');
+          this.onAuthSuccess(user);
+        } else {
+          // Sign in with OTP
+          const otp = this.getEnteredOTP();
+          if (otp.length !== 6) {
+            this.showToast('Please enter the complete 6-digit OTP code', 'error');
+            return;
+          }
+          const user = await window.Auth.signInWithOTP(identifier, otp, remember);
+          this.showToast(`OTP Verified! Welcome, ${user.name || 'Lender'}!`, 'success');
+          this.onAuthSuccess(user);
+        }
+      } else if (window.Auth.view === 'signup') {
+        const name = document.getElementById('authNameInput')?.value.trim();
+        const pass = document.getElementById('authPasswordInput')?.value;
+        const confirmPass = document.getElementById('authConfirmPasswordInput')?.value;
+
+        if (!name) {
+          this.showToast('Please enter your full name', 'error');
+          return;
+        }
+        if (!pass || pass.length < 6) {
+          this.showToast('Password must be at least 6 characters', 'error');
+          return;
+        }
+        if (pass !== confirmPass) {
+          this.showToast('Passwords do not match!', 'error');
+          return;
+        }
+
+        const email = isEmail ? identifier : '';
+        const phone = !isEmail ? identifier : '';
+        const user = await window.Auth.signUpUser(name, email, phone, pass);
+        this.showToast(`Account created! Welcome to LendGuard, ${name}!`, 'success');
+        this.onAuthSuccess(user);
+      } else if (window.Auth.view === 'forgot') {
+        const otp = this.getEnteredOTP();
+        const newPass = document.getElementById('authPasswordInput')?.value;
+        const confirmPass = document.getElementById('authConfirmPasswordInput')?.value;
+
+        if (otp.length !== 6) {
+          this.showToast('Please enter the 6-digit OTP received', 'error');
+          return;
+        }
+        if (!newPass || newPass.length < 6) {
+          this.showToast('New password must be at least 6 characters', 'error');
+          return;
+        }
+        if (newPass !== confirmPass) {
+          this.showToast('Passwords do not match!', 'error');
+          return;
+        }
+
+        const otpValid = window.Auth.validateOTP(otp);
+        if (!otpValid.valid) {
+          const { locked, attemptsLeft } = window.Auth.incrementFailedAttempts();
+          if (locked) {
+            throw new Error('3 failed attempts reached. Vault is locked for 60 seconds.');
+          }
+          throw new Error(`Invalid OTP. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.`);
+        }
+
+        await window.Auth.resetPassword(identifier, newPass);
+        this.showToast('Password successfully reset! You can now sign in.', 'success');
+        this.setAuthView('signin');
+      }
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
+  }
+
+  quickDemoLogin() {
+    const demoUser = {
+      id: 'USR-DEMO-01',
+      name: 'Karthik Ramaswamy',
+      email: 'demo@lendguard.io',
+      phone: '+1 555-0199'
+    };
+    window.Auth.setSession(demoUser, true);
+    this.showToast('Logged in with Quick Demo access!', 'success');
+    this.onAuthSuccess(demoUser);
+  }
+
+  onAuthSuccess(user) {
+    const portal = document.getElementById('authPortal');
+    if (portal) portal.classList.add('hidden');
+
+    const profileName = document.getElementById('userProfileName');
+    const greeting = document.getElementById('topbarUserGreeting');
+
+    if (profileName) profileName.textContent = user.name || user.email || 'User';
+    if (greeting) greeting.textContent = `Welcome back, ${user.name || 'Lender'}`;
+
+    this.renderDashboard();
+    this.renderSecurityCenter();
+  }
+
+  handleSignOut() {
+    if (confirm('Are you sure you want to sign out of LendGuard?')) {
+      window.Auth.clearSession();
+      const portal = document.getElementById('authPortal');
+      if (portal) portal.classList.remove('hidden');
+      this.showToast('Signed out successfully', 'info');
+    }
   }
 }
 

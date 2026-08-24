@@ -1,28 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LendGuard - Secure Personal Loan & Debt Tracker</title>
-  <meta name="description"
-    content="Never forget money lent or borrowed. Track principal, interest, tenures, partial repayments, polite reminders, and encrypted security controls.">
-
+  <meta name="description" content="Never forget money lent or borrowed. Track principal, interest, tenures, partial repayments, polite reminders, and encrypted security controls.">
+  
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
-    rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
   <!-- Application Stylesheets -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/reminders.css">
   <link rel="stylesheet" href="css/security.css">
+  <link rel="stylesheet" href="css/auth.css">
 </head>
-
 <body>
 
   <!-- ================= MASTER PIN LOCK SCREEN ================= -->
@@ -60,28 +56,246 @@
     </div>
   </div>
 
+  <!-- ================= SPLIT-SCREEN AUTHENTICATION PORTAL ================= -->
+  <div class="auth-portal-wrapper" id="authPortal">
+    <div class="auth-container">
+      
+      <!-- Left Hero Pane: Visual Branding & Security Trust -->
+      <div class="auth-hero-pane">
+        <div class="auth-hero-header">
+          <div class="brand-logo">🛡️</div>
+          <div>
+            <h2 style="font-size:1.35rem; font-weight:800; color:var(--text-primary);">LendGuard</h2>
+            <p style="font-size:0.75rem; color:var(--text-muted);">Personal Lending & Debt Management</p>
+          </div>
+        </div>
+
+        <div class="auth-hero-content">
+          <div class="badge badge-active" style="margin-bottom:1rem;">
+            <span>🔐</span> Enterprise-Grade Security
+          </div>
+          <h1 class="auth-hero-title">
+            Private, Secure & <span>Tamper-Proof</span> Debt Tracking
+          </h1>
+          <p class="auth-hero-desc">
+            Keep track of personal loans, interest rates, tenures, and partial repayments with military-grade zero-knowledge privacy.
+          </p>
+
+          <!-- Floating Trust Metric Cards -->
+          <div class="auth-trust-cards">
+            <div class="trust-card">
+              <div class="trust-icon trust-icon-green">🛡️</div>
+              <div class="trust-details">
+                <h4>Zero-Knowledge Client Storage</h4>
+                <p>All sensitive financial data is encrypted and kept exclusively on your local device.</p>
+              </div>
+            </div>
+
+            <div class="trust-card">
+              <div class="trust-icon trust-icon-cyan">📲</div>
+              <div class="trust-details">
+                <h4>Dual-Channel Email & Mobile OTP</h4>
+                <p>Sign in with password or 6-digit one-time password with auto-expiring codes.</p>
+              </div>
+            </div>
+
+            <div class="trust-card">
+              <div class="trust-icon trust-icon-amber">⚡</div>
+              <div class="trust-details">
+                <h4>3-Attempt Brute Force Defense</h4>
+                <p>Strict anti-abuse token limiter with refresh-proof 60s cooldown timer.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-hero-footer">
+          <div>© 2026 LendGuard Vault • W3C WebCrypto Compliant</div>
+          <div style="color:var(--accent-primary);">100% Client Encrypted</div>
+        </div>
+      </div>
+
+      <!-- Right Form Pane: Sign In / Sign Up / Forgot Password -->
+      <div class="auth-form-pane">
+        <div class="auth-form-box" id="authFormBox">
+          
+          <!-- View Navigation Tabs -->
+          <div class="auth-nav-tabs">
+            <button class="auth-nav-btn active" id="tabBtnSignIn" onclick="window.LendApp.setAuthView('signin')">Sign In</button>
+            <button class="auth-nav-btn" id="tabBtnSignUp" onclick="window.LendApp.setAuthView('signup')">Create Account</button>
+            <button class="auth-nav-btn" id="tabBtnForgot" onclick="window.LendApp.setAuthView('forgot')">Forgot Password</button>
+          </div>
+
+          <!-- 3-Attempt Lockout Banner -->
+          <div class="lockout-banner" id="authLockoutBanner" style="display:none;">
+            <span style="font-size:1.3rem;">🔒</span>
+            <div>
+              <strong>Too many failed attempts!</strong>
+              <div>Locked for security. Try again in <span class="lockout-countdown" id="lockoutTimerText">00:60</span></div>
+            </div>
+          </div>
+
+          <!-- Simulated OTP Notification Banner -->
+          <div class="otp-sim-banner" id="otpSimBanner" style="display:none;">
+            <div>
+              <span>Verification OTP: </span>
+              <span class="otp-sim-code" id="otpSimCodeDisplay" onclick="window.LendApp.autoFillOTP()" title="Click to auto-fill">123456</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">(Expires in 2m)</span>
+          </div>
+
+          <!-- Channel Selector: Email vs Phone -->
+          <div class="pill-selector-group" id="channelSelectorGroup">
+            <button type="button" class="pill-option active" id="pillEmail" onclick="window.LendApp.setAuthChannel('email')">
+              <span>✉️</span> Email Address
+            </button>
+            <button type="button" class="pill-option" id="pillPhone" onclick="window.LendApp.setAuthChannel('phone')">
+              <span>📱</span> Mobile Number
+            </button>
+          </div>
+
+          <!-- Verification Mode: Password vs OTP (Shown on Sign In) -->
+          <div class="pill-selector-group" id="modeSelectorGroup">
+            <button type="button" class="pill-option active" id="pillPassword" onclick="window.LendApp.setAuthMode('password')">
+              <span>🔑</span> Password
+            </button>
+            <button type="button" class="pill-option" id="pillOTP" onclick="window.LendApp.setAuthMode('otp')">
+              <span>📲</span> 6-Digit OTP
+            </button>
+          </div>
+
+          <!-- Master Auth Form -->
+          <form id="masterAuthForm" onsubmit="window.LendApp.handleAuthSubmit(event)">
+            
+            <!-- Full Name (Only on Sign Up) -->
+            <div class="form-group" id="authNameGroup" style="display:none;">
+              <label class="form-label">Full Name <span class="required">*</span></label>
+              <input type="text" id="authNameInput" class="form-input" placeholder="e.g. Karthik Ramaswamy">
+            </div>
+
+            <!-- Email Identifier -->
+            <div class="form-group" id="authEmailGroup">
+              <label class="form-label">Email Address <span class="required">*</span></label>
+              <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com">
+            </div>
+
+            <!-- Mobile Phone Identifier -->
+            <div class="form-group" id="authPhoneGroup" style="display:none;">
+              <label class="form-label">Mobile Phone Number <span class="required">*</span></label>
+              <input type="tel" id="authPhoneInput" class="form-input" placeholder="+1 (555) 019-9234">
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group" id="authPasswordGroup">
+              <div class="flex-between">
+                <label class="form-label" id="authPasswordLabel">Password <span class="required">*</span></label>
+                <a href="#" style="font-size:0.75rem; color:var(--accent-primary); text-decoration:none;" id="linkForgotPassInline" onclick="window.LendApp.setAuthView('forgot')">Forgot?</a>
+              </div>
+              <div class="input-prefix-wrap" style="position:relative;">
+                <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" style="padding-right:2.5rem;">
+                <button type="button" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="window.LendApp.togglePasswordVisibility('authPasswordInput')">👁️</button>
+              </div>
+              
+              <!-- Password Strength Meter (On Sign Up) -->
+              <div class="password-strength-container" id="passStrengthContainer" style="display:none;">
+                <div class="strength-bar-bg">
+                  <div class="strength-bar-fill" id="passStrengthFill"></div>
+                </div>
+                <div class="flex-between">
+                  <span class="strength-label-text" id="passStrengthLabel">Strength: None</span>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Use 8+ chars with uppercase, numbers & symbols</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirm Password (Only on Sign Up / Reset) -->
+            <div class="form-group" id="authConfirmPasswordGroup" style="display:none;">
+              <label class="form-label">Confirm Password <span class="required">*</span></label>
+              <input type="password" id="authConfirmPasswordInput" class="form-input" placeholder="••••••••">
+            </div>
+
+            <!-- 6-Box OTP Verification Group (When Mode is OTP or Resetting) -->
+            <div id="authOTPSection" style="display:none;">
+              <div class="flex-between">
+                <label class="form-label" style="margin-bottom:0;">Enter 6-Digit Verification Code</label>
+                <button type="button" class="btn btn-outline-emerald btn-sm" id="btnRequestOTP" onclick="window.LendApp.requestOTP()" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
+                  📨 Send Code
+                </button>
+              </div>
+              
+              <div class="otp-input-group" id="otpBoxContainer">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="0">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="1">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="2">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="3">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="4">
+                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="5">
+              </div>
+
+              <div class="otp-timer-row">
+                <span>Didn't receive code?</span>
+                <button type="button" class="btn-resend-otp" id="btnResendOTP" onclick="window.LendApp.requestOTP()">
+                  Resend OTP <span id="otpResendTimerSpan"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me / Terms Checkbox -->
+            <div class="form-group" id="rememberMeGroup">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="chkRememberMe" checked>
+                <span>Remember this device for 30 days</span>
+              </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width:100%; padding:0.85rem; font-size:0.95rem; margin-bottom:1rem;">
+              Sign In to Vault
+            </button>
+
+            <!-- 1-Click Demo / Guest Access -->
+            <button type="button" class="btn btn-secondary" onclick="window.LendApp.quickDemoLogin()" style="width:100%; font-size:0.85rem; border-style:dashed;">
+              ⚡ Quick Demo Access (1-Click)
+            </button>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ================= MAIN APP WRAPPER ================= -->
   <div class="app-container">
-
+    
     <!-- Topbar Navigation -->
     <header class="topbar">
       <div class="brand-group">
         <div class="brand-logo">🛡️</div>
         <div class="brand-info">
           <h1>LendGuard <span class="brand-badge">PRO SECURE</span></h1>
-          <p>Personal Loan, IOU & Debt Management Platform</p>
+          <p id="topbarUserGreeting">Personal Loan, IOU & Debt Management Platform</p>
         </div>
       </div>
 
       <div class="topbar-actions">
+        <!-- User Profile & Sign Out -->
+        <div style="display:flex; align-items:center; gap:0.5rem; background:var(--bg-secondary); padding:0.25rem 0.65rem; border-radius:var(--radius-full); border:1px solid var(--border-subtle);">
+          <span style="font-size:0.85rem;">👤</span>
+          <span style="font-size:0.8rem; font-weight:600;" id="userProfileName">Karthik R.</span>
+          <button class="btn btn-sm" onclick="window.LendApp.handleSignOut()" title="Sign Out of Vault" style="padding:0.2rem 0.4rem; background:transparent; border:none; color:var(--status-overdue); cursor:pointer;">
+            🚪 Exit
+          </button>
+        </div>
+
         <button class="btn btn-secondary btn-sm" id="btnOpenSupabaseModal" title="Configure Supabase Cloud Sync">
           <span id="cloudStatusBadge">☁️ Supabase Cloud</span>
         </button>
         <button class="btn btn-secondary btn-sm" id="btnToggleTheme" title="Toggle between Dark and Light theme">
           ☀️ Light Mode
         </button>
-        <button class="btn btn-secondary btn-sm" id="btnTogglePrivacy"
-          title="Toggle privacy mode to hide balances from onlookers">
+        <button class="btn btn-secondary btn-sm" id="btnTogglePrivacy" title="Toggle privacy mode to hide balances from onlookers">
           👁️ Mask Balances
         </button>
         <button class="btn btn-secondary btn-sm" id="btnLockNow" title="Instantly lock with PIN">
@@ -108,7 +322,7 @@
 
     <!-- ================= VIEW 1: DASHBOARD ================= -->
     <main class="view-panel active" id="view-dashboard">
-
+      
       <!-- Financial Metric Cards -->
       <section class="stats-grid">
         <div class="stat-card stat-lent">
@@ -196,19 +410,16 @@
             <div class="form-group">
               <div class="flex-between" style="margin-bottom:0.4rem;">
                 <label class="form-label" style="margin-bottom:0;">Loan Principal Amount ($)</label>
-                <input type="number" id="calcPrincipalInput" class="form-input"
-                  style="width:120px; padding:0.4rem 0.6rem;" value="10000" min="100" max="1000000" step="100">
+                <input type="number" id="calcPrincipalInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="10000" min="100" max="1000000" step="100">
               </div>
-              <input type="range" id="calcPrincipalRange" class="range-slider" min="500" max="100000" step="500"
-                value="10000">
+              <input type="range" id="calcPrincipalRange" class="range-slider" min="500" max="100000" step="500" value="10000">
             </div>
 
             <!-- Interest Rate Slider -->
             <div class="form-group">
               <div class="flex-between" style="margin-bottom:0.4rem;">
                 <label class="form-label" style="margin-bottom:0;">Interest Rate (% Annual)</label>
-                <input type="number" id="calcRateInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;"
-                  value="8" min="0" max="50" step="0.5">
+                <input type="number" id="calcRateInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="8" min="0" max="50" step="0.5">
               </div>
               <input type="range" id="calcRateRange" class="range-slider" min="0" max="36" step="0.5" value="8">
             </div>
@@ -217,34 +428,27 @@
             <div class="form-group">
               <div class="flex-between" style="margin-bottom:0.4rem;">
                 <label class="form-label" style="margin-bottom:0;">Tenure (Months)</label>
-                <input type="number" id="calcTenureInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;"
-                  value="12" min="1" max="120">
+                <input type="number" id="calcTenureInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="12" min="1" max="120">
               </div>
               <input type="range" id="calcTenureRange" class="range-slider" min="1" max="60" step="1" value="12">
             </div>
           </div>
 
           <!-- Calculation Outputs -->
-          <div
-            style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:1.5rem; display:flex; flex-direction:column; justify-content:center;">
+          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:1.5rem; display:flex; flex-direction:column; justify-content:center;">
             <div style="text-align:center; margin-bottom:1.5rem;">
-              <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">
-                Estimated Monthly Installment (EMI)</div>
-              <div style="font-size:2.4rem; font-weight:800; color:var(--accent-primary); font-family:var(--font-mono);"
-                id="calcResultEMI">$869.88</div>
+              <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Estimated Monthly Installment (EMI)</div>
+              <div style="font-size:2.4rem; font-weight:800; color:var(--accent-primary); font-family:var(--font-mono);" id="calcResultEMI">$869.88</div>
             </div>
 
-            <div
-              style="display:flex; justify-content:space-around; border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <div style="display:flex; justify-content:space-around; border-top:1px solid var(--border-subtle); padding-top:1rem;">
               <div style="text-align:center;">
                 <div style="font-size:0.75rem; color:var(--text-muted);">Total Interest</div>
-                <div style="font-size:1.15rem; font-weight:700; color:var(--status-partial);" id="calcResultInterest">
-                  $438.61</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--status-partial);" id="calcResultInterest">$438.61</div>
               </div>
               <div style="text-align:center;">
                 <div style="font-size:0.75rem; color:var(--text-muted);">Total Repayment</div>
-                <div style="font-size:1.15rem; font-weight:700; color:var(--text-primary);" id="calcResultTotal">
-                  $10,438.61</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--text-primary);" id="calcResultTotal">$10,438.61</div>
               </div>
             </div>
           </div>
@@ -272,15 +476,14 @@
 
     <!-- ================= VIEW 3: SECURITY CENTER ================= -->
     <section class="view-panel" id="view-security">
-
+      
       <div class="security-metrics-grid">
         <div class="security-score-card">
           <div class="score-circle">100%</div>
           <div>
             <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:0.25rem;">Security & Privacy Guard</h3>
             <p style="font-size:0.8rem; color:var(--text-secondary);">
-              Zero-Knowledge architecture active. All sensitive loan parameters and contacts remain exclusively on your
-              local device.
+              Zero-Knowledge architecture active. All sensitive loan parameters and contacts remain exclusively on your local device.
             </p>
           </div>
         </div>
@@ -308,22 +511,19 @@
         </div>
       </div>
 
-      <div
-        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
-
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+        
         <!-- PIN & Inactivity Settings -->
         <div class="card">
           <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem;">Vault Access & PIN Settings</h3>
           <form id="securitySettingsForm">
             <div class="form-group">
               <label class="form-label">Change Master PIN (4 digits)</label>
-              <input type="password" id="newPinInput" class="form-input" placeholder="Enter new 4-digit PIN"
-                maxlength="4" pattern="[0-9]{4}">
+              <input type="password" id="newPinInput" class="form-input" placeholder="Enter new 4-digit PIN" maxlength="4" pattern="[0-9]{4}">
             </div>
             <div class="form-group">
               <label class="form-label">Confirm New PIN</label>
-              <input type="password" id="confirmPinInput" class="form-input" placeholder="Re-type new PIN" maxlength="4"
-                pattern="[0-9]{4}">
+              <input type="password" id="confirmPinInput" class="form-input" placeholder="Re-type new PIN" maxlength="4" pattern="[0-9]{4}">
             </div>
             <div class="form-group">
               <label class="form-label">Inactivity Auto-Lock Timeout</label>
@@ -343,10 +543,9 @@
         <div class="card">
           <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:0.5rem;">Backup & Data Portability</h3>
           <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">
-            Export your entire loan history and audit ledger into a verified backup file, or restore from a previous
-            backup.
+            Export your entire loan history and audit ledger into a verified backup file, or restore from a previous backup.
           </p>
-
+          
           <button class="btn btn-outline-emerald" id="btnExportBackup" style="width:100%; margin-bottom:1rem;">
             📥 Export Encrypted JSON Backup
           </button>
@@ -365,8 +564,7 @@
           <div>
             <h3 style="font-size:1.15rem; font-weight:700;">Tamper-Evident Transaction Ledger</h3>
             <p style="font-size:0.8rem; color:var(--text-secondary);">
-              Every loan creation, edit, repayment, and authentication is cryptographically hashed with SHA-256 block
-              linking.
+              Every loan creation, edit, repayment, and authentication is cryptographically hashed with SHA-256 block linking.
             </p>
           </div>
           <span class="badge badge-active">Cryptographically Linked</span>
@@ -406,7 +604,7 @@
       <form id="loanForm">
         <input type="hidden" id="loanEditId">
         <div class="modal-body">
-
+          
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
             <div class="form-group">
               <label class="form-label">Agreement Direction <span class="required">*</span></label>
@@ -449,8 +647,7 @@
               <label class="form-label">Principal Amount <span class="required">*</span></label>
               <div class="input-prefix-wrap">
                 <span class="input-prefix">$</span>
-                <input type="number" id="loanPrincipal" class="form-input" placeholder="1000" min="1" step="any"
-                  required>
+                <input type="number" id="loanPrincipal" class="form-input" placeholder="1000" min="1" step="any" required>
               </div>
             </div>
             <div class="form-group">
@@ -481,8 +678,7 @@
 
             <div class="form-group">
               <label class="form-label">Rate / Fee</label>
-              <input type="number" id="loanInterestRate" class="form-input" placeholder="0" min="0" step="0.1"
-                value="0">
+              <input type="number" id="loanInterestRate" class="form-input" placeholder="0" min="0" step="0.1" value="0">
             </div>
           </div>
 
@@ -503,21 +699,18 @@
           </div>
 
           <!-- Dynamic Live Calculation Preview -->
-          <div id="loanCalcPreview"
-            style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.25); border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1.25rem;">
+          <div id="loanCalcPreview" style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.25); border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1.25rem;">
             <!-- Populated via JS -->
           </div>
 
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">Agreement Notes / Purpose (Private)</label>
-            <textarea id="loanNotes" class="form-textarea" rows="2"
-              placeholder="e.g. Bridge loan for studio renovations, agreed to return in 2 parts..."></textarea>
+            <textarea id="loanNotes" class="form-textarea" rows="2" placeholder="e.g. Bridge loan for studio renovations, agreed to return in 2 parts..."></textarea>
           </div>
 
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary"
-            onclick="window.LendApp.closeModal('loanModal')">Cancel</button>
+          <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('loanModal')">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Loan Record</button>
         </div>
       </form>
@@ -533,8 +726,7 @@
       </div>
       <form id="paymentForm">
         <div class="modal-body">
-          <div
-            style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
+          <div style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
             <div style="font-size:0.8rem; color:var(--text-muted);">Borrower:</div>
             <div style="font-size:1.1rem; font-weight:700;" id="payBorrowerName">-</div>
             <div style="display:flex; justify-content:space-between; margin-top:0.5rem; font-size:0.85rem;">
@@ -547,8 +739,7 @@
             <label class="form-label">Payment Amount Received <span class="required">*</span></label>
             <div class="input-prefix-wrap">
               <span class="input-prefix">$</span>
-              <input type="number" id="payAmountInput" class="form-input" placeholder="e.g. 500" min="0.01" step="any"
-                required>
+              <input type="number" id="payAmountInput" class="form-input" placeholder="e.g. 500" min="0.01" step="any" required>
             </div>
             <div class="input-hint">Partial payments will automatically reduce remaining principal.</div>
           </div>
@@ -578,8 +769,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary"
-            onclick="window.LendApp.closeModal('paymentModal')">Cancel</button>
+          <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('paymentModal')">Cancel</button>
           <button type="submit" class="btn btn-primary">Log Repayment</button>
         </div>
       </form>
@@ -608,8 +798,7 @@
       </div>
       <div class="modal-body">
         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
-          Sending reminder to <strong id="reminderBorrowerName" style="color:var(--text-primary);">Friend</strong>.
-          Choose tone:
+          Sending reminder to <strong id="reminderBorrowerName" style="color:var(--text-primary);">Friend</strong>. Choose tone:
         </p>
 
         <div class="reminder-tones">
@@ -633,8 +822,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary"
-          onclick="window.LendApp.closeModal('reminderModal')">Close</button>
+        <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('reminderModal')">Close</button>
       </div>
     </div>
   </div>
@@ -651,8 +839,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('iouModal')">Close</button>
-        <button type="button" class="btn btn-primary" onclick="window.LendApp.printReceipt()">🖨️ Print / Save as
-          PDF</button>
+        <button type="button" class="btn btn-primary" onclick="window.LendApp.printReceipt()">🖨️ Print / Save as PDF</button>
       </div>
     </div>
   </div>
@@ -665,42 +852,35 @@
         <button class="modal-close" onclick="window.LendApp.closeModal('supabaseModal')">&times;</button>
       </div>
       <div class="modal-body">
-
+        
         <!-- Tab Switcher: Credentials vs Account -->
         <div id="supabaseConfigSection">
-          <div
-            style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem; font-size:0.85rem;">
+          <div style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem; font-size:0.85rem;">
             <strong>PostgreSQL + Row-Level Security (RLS)</strong>
             <p style="color:var(--text-secondary); margin-top:4px;">
-              Connect your own Supabase project for instant multi-device syncing. If not configured, LendGuard runs
-              offline using your local encrypted vault.
+              Connect your own Supabase project for instant multi-device syncing. If not configured, LendGuard runs offline using your local encrypted vault.
             </p>
           </div>
 
           <form id="supabaseCredsForm">
             <div class="form-group">
               <label class="form-label">Supabase Project URL</label>
-              <input type="url" id="supabaseUrlInput" class="form-input"
-                placeholder="https://your-project-id.supabase.co" required>
+              <input type="url" id="supabaseUrlInput" class="form-input" placeholder="https://your-project-id.supabase.co" required>
             </div>
             <div class="form-group">
               <label class="form-label">Supabase Anon Public Key</label>
-              <input type="password" id="supabaseKeyInput" class="form-input"
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+              <input type="password" id="supabaseKeyInput" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:0.5rem;">Connect Supabase
-              Project</button>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:0.5rem;">Connect Supabase Project</button>
           </form>
         </div>
 
         <!-- Auth Section (Shown after credentials connected) -->
         <div id="supabaseAuthSection" style="display:none;">
-          <div
-            style="display:flex; justify-content:space-between; align-items:center; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); padding:0.85rem 1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); padding:0.85rem 1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
             <div>
               <div style="font-size:0.75rem; color:var(--text-muted);">CONNECTED PROJECT</div>
-              <strong id="connectedProjectUrl"
-                style="font-size:0.85rem; color:var(--accent-primary); word-break:break-all;">-</strong>
+              <strong id="connectedProjectUrl" style="font-size:0.85rem; color:var(--accent-primary); word-break:break-all;">-</strong>
             </div>
             <button class="btn btn-secondary btn-sm" onclick="window.LendApp.disconnectSupabase()">Disconnect</button>
           </div>
@@ -717,10 +897,8 @@
                 <input type="password" id="supabasePasswordInput" class="form-input" placeholder="••••••••" required>
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                <button type="button" class="btn btn-primary" onclick="window.LendApp.handleSupabaseSignIn()">Sign
-                  In</button>
-                <button type="button" class="btn btn-secondary" onclick="window.LendApp.handleSupabaseSignUp()">Create
-                  Account</button>
+                <button type="button" class="btn btn-primary" onclick="window.LendApp.handleSupabaseSignIn()">Sign In</button>
+                <button type="button" class="btn btn-secondary" onclick="window.LendApp.handleSupabaseSignUp()">Create Account</button>
               </div>
             </form>
           </div>
@@ -728,15 +906,12 @@
           <div id="supabaseUserLoggedIn" style="display:none; text-align:center; padding:1rem 0;">
             <div style="font-size:2rem; margin-bottom:0.5rem;">✅</div>
             <h4 style="font-size:1.1rem; margin-bottom:0.25rem;">Cloud Sync Active</h4>
-            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;"
-              id="supabaseUserEmailDisplay">-</p>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" id="supabaseUserEmailDisplay">-</p>
 
-            <button class="btn btn-primary" style="width:100%; margin-bottom:0.75rem;"
-              onclick="window.LendApp.triggerManualSync()">
+            <button class="btn btn-primary" style="width:100%; margin-bottom:0.75rem;" onclick="window.LendApp.triggerManualSync()">
               🔄 Sync All Data Now
             </button>
-            <button class="btn btn-secondary btn-sm" style="width:100%;"
-              onclick="window.LendApp.handleSupabaseSignOut()">
+            <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="window.LendApp.handleSupabaseSignOut()">
               Sign Out
             </button>
           </div>
@@ -744,8 +919,7 @@
 
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary"
-          onclick="window.LendApp.closeModal('supabaseModal')">Close</button>
+        <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('supabaseModal')">Close</button>
       </div>
     </div>
   </div>
@@ -763,7 +937,7 @@
   <script src="js/demoData.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/supabaseClient.js"></script>
+  <script src="js/authEngine.js"></script>
   <script src="js/app.js"></script>
 </body>
-
 </html>
