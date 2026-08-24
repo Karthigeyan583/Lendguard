@@ -28,7 +28,7 @@ class LendGuardApp {
   }
 
   initTheme() {
-    const savedTheme = localStorage.getItem('lendguard_theme') || 
+    const savedTheme = localStorage.getItem('lendguard_theme') ||
       (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     this.setTheme(savedTheme);
   }
@@ -41,7 +41,7 @@ class LendGuardApp {
       document.documentElement.removeAttribute('data-theme');
     }
     localStorage.setItem('lendguard_theme', theme);
-    
+
     const themeBtn = document.getElementById('btnToggleTheme');
     if (themeBtn) {
       themeBtn.innerHTML = theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
@@ -141,7 +141,7 @@ class LendGuardApp {
     const loanForm = document.getElementById('loanForm');
     if (loanForm) {
       loanForm.addEventListener('submit', (e) => this.handleLoanFormSubmit(e));
-      
+
       // Dynamic calculations inside add modal
       const calcInputs = ['loanPrincipal', 'loanInterestType', 'loanInterestRate', 'loanTenureMonths', 'loanStartDate'];
       calcInputs.forEach(id => {
@@ -235,7 +235,7 @@ class LendGuardApp {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     let icon = 'ℹ️';
     if (type === 'success') icon = '✅';
     if (type === 'error') icon = '⚠️';
@@ -290,13 +290,13 @@ class LendGuardApp {
     if (!grid) return;
 
     const loans = window.StorageManager.getLoans();
-    
+
     // Filter logic
     const filtered = loans.filter(loan => {
       const metrics = LoanEngine.calculateLoanMetrics(loan);
-      
+
       // Search matching
-      const matchesSearch = !this.searchQuery || 
+      const matchesSearch = !this.searchQuery ||
         loan.borrowerName.toLowerCase().includes(this.searchQuery) ||
         (loan.tag && loan.tag.toLowerCase().includes(this.searchQuery)) ||
         (loan.notes && loan.notes.toLowerCase().includes(this.searchQuery));
