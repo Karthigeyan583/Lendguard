@@ -1310,25 +1310,92 @@ class LendGuardApp {
     this.onAuthSuccess(demoUser);
   }
 
-  onAuthSuccess(user) {
+  goToAuthStage(stageName) {
+    const stages = ['stageWelcome', 'stageAuth', 'stageProfile', 'stageBiometric'];
+    stages.forEach(id => {
+      document.getElementById(id)?.classList.remove('active');
+    });
+
+    if (stageName === 'welcome') {
+      document.getElementById('stageWelcome')?.classList.add('active');
+    } else if (stageName === 'signin' || stageName === 'signup' || stageName === 'forgot') {
+      document.getElementById('stageAuth')?.classList.add('active');
+      this.setAuthView(stageName);
+    } else if (stageName === 'profile') {
+      document.getElementById('stageProfile')?.classList.add('active');
+    } else if (stageName === 'biometric') {
+      document.getElementById('stageBiometric')?.classList.add('active');
+    }
+  }
+
+  handleProfileSetupSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('profileNameInput')?.value.trim();
+    const currency = document.getElementById('profileCurrencySelect')?.value || '$';
+
+    if (!name) {
+      this.showToast('Please enter your name or nickname', 'error');
+      return;
+    }
+
+    window.Auth.updateProfile(name, currency);
+    this.showToast(`Profile saved for ${name}!`, 'success');
+
+    // Update global currency on Add Loan modal if applicable
+    const defCurr = document.getElementById('loanCurrency');
+    if (defCurr) defCurr.value = currency;
+
+    // Advance to Biometric Checkpoint
+    this.goToAuthStage('biometric');
+  }
+
+  handleBiometricChoice(enable) {
+    if (enable) {
+      // Set quick PIN & Biometric
+      window.Auth.setBiometricPreference(true, '1234');
+      this.showToast('Quick Security Enabled (PIN: 1234)', 'success');
+    } else {
+      window.Auth.setBiometricPreference(false);
+      this.showToast('Quick Security skipped. You can enable it anytime from Security Center.', 'info');
+    }
+
+    const session = window.Auth.getSession();
+    this.finishOnboardingAndOpenDashboard(session);
+  }
+
+  finishOnboardingAndOpenDashboard(user) {
     const portal = document.getElementById('authPortal');
     if (portal) portal.classList.add('hidden');
 
     const profileName = document.getElementById('userProfileName');
     const greeting = document.getElementById('topbarUserGreeting');
 
-    if (profileName) profileName.textContent = user.name || user.email || 'User';
-    if (greeting) greeting.textContent = `Welcome back, ${user.name || 'Lender'}`;
+    if (profileName) profileName.textContent = user?.name || user?.email || 'User';
+    if (greeting) greeting.textContent = `Welcome, ${user?.name || 'Lender'}!`;
 
     this.renderDashboard();
     this.renderSecurityCenter();
+  }
+
+  onAuthSuccess(user) {
+    if (!user.hasCompletedOnboarding) {
+      // Direct newly registered users to Minimal Profile Setup (Step 1 of 2)
+      document.getElementById('profileNameInput').value = user.name && !user.name.startsWith('User ') ? user.name : '';
+      this.goToAuthStage('profile');
+    } else {
+      // Existing verified users jump directly to Dashboard
+      this.finishOnboardingAndOpenDashboard(user);
+    }
   }
 
   handleSignOut() {
     if (confirm('Are you sure you want to sign out of LendGuard?')) {
       window.Auth.clearSession();
       const portal = document.getElementById('authPortal');
-      if (portal) portal.classList.remove('hidden');
+      if (portal) {
+        portal.classList.remove('hidden');
+        this.goToAuthStage('welcome');
+      }
       this.showToast('Signed out successfully', 'info');
     }
   }

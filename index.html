@@ -115,150 +115,243 @@
         </div>
       </div>
 
-      <!-- Right Form Pane: Sign In / Sign Up / Forgot Password -->
+      <!-- Right Form Pane: 4-Stage Zero-Friction Onboarding Wizard -->
       <div class="auth-form-pane">
         <div class="auth-form-box" id="authFormBox">
           
-          <!-- View Navigation Tabs -->
-          <div class="auth-nav-tabs">
-            <button class="auth-nav-btn active" id="tabBtnSignIn" onclick="window.LendApp.setAuthView('signin')">Sign In</button>
-            <button class="auth-nav-btn" id="tabBtnSignUp" onclick="window.LendApp.setAuthView('signup')">Create Account</button>
-            <button class="auth-nav-btn" id="tabBtnForgot" onclick="window.LendApp.setAuthView('forgot')">Forgot Password</button>
-          </div>
+          <!-- ================= STAGE 1: WELCOME SCREEN ================= -->
+          <div class="onboarding-stage active" id="stageWelcome">
+            <div class="welcome-badge">
+              <span>🛡️</span> Private & Encrypted Vault
+            </div>
+            <h2 class="welcome-title">Never Forget Money Lent or Borrowed</h2>
+            <p class="welcome-desc">
+              Track personal loans, interest rates, tenures, and partial repayments with zero cloud tracking and military-grade privacy.
+            </p>
 
-          <!-- 3-Attempt Lockout Banner -->
-          <div class="lockout-banner" id="authLockoutBanner" style="display:none;">
-            <span style="font-size:1.3rem;">🔒</span>
-            <div>
-              <strong>Too many failed attempts!</strong>
-              <div>Locked for security. Try again in <span class="lockout-countdown" id="lockoutTimerText">00:60</span></div>
+            <div class="welcome-action-buttons">
+              <button class="btn btn-primary" style="padding:0.95rem; font-size:1rem;" onclick="window.LendApp.goToAuthStage('signup')">
+                🚀 Get Started (Sign Up Free)
+              </button>
+              <button class="btn btn-secondary" style="padding:0.85rem; font-size:0.9rem;" onclick="window.LendApp.goToAuthStage('signin')">
+                🔑 Already have an account? Sign In
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.LendApp.quickDemoLogin()" style="border-style:dashed; margin-top:0.5rem; opacity:0.85;">
+                ⚡ 1-Click Quick Demo Access
+              </button>
             </div>
           </div>
 
-          <!-- Simulated OTP Notification Banner -->
-          <div class="otp-sim-banner" id="otpSimBanner" style="display:none;">
-            <div>
-              <span>Verification OTP: </span>
-              <span class="otp-sim-code" id="otpSimCodeDisplay" onclick="window.LendApp.autoFillOTP()" title="Click to auto-fill">123456</span>
-            </div>
-            <span style="font-size:0.75rem; color:var(--text-muted);">(Expires in 2m)</span>
-          </div>
-
-          <!-- Channel Selector: Email vs Phone -->
-          <div class="pill-selector-group" id="channelSelectorGroup">
-            <button type="button" class="pill-option active" id="pillEmail" onclick="window.LendApp.setAuthChannel('email')">
-              <span>✉️</span> Email Address
-            </button>
-            <button type="button" class="pill-option" id="pillPhone" onclick="window.LendApp.setAuthChannel('phone')">
-              <span>📱</span> Mobile Number
-            </button>
-          </div>
-
-          <!-- Verification Mode: Password vs OTP (Shown on Sign In) -->
-          <div class="pill-selector-group" id="modeSelectorGroup">
-            <button type="button" class="pill-option active" id="pillPassword" onclick="window.LendApp.setAuthMode('password')">
-              <span>🔑</span> Password
-            </button>
-            <button type="button" class="pill-option" id="pillOTP" onclick="window.LendApp.setAuthMode('otp')">
-              <span>📲</span> 6-Digit OTP
-            </button>
-          </div>
-
-          <!-- Master Auth Form -->
-          <form id="masterAuthForm" onsubmit="window.LendApp.handleAuthSubmit(event)">
+          <!-- ================= STAGE 2: AUTHENTICATION (SIGN IN / SIGN UP) ================= -->
+          <div class="onboarding-stage" id="stageAuth">
             
-            <!-- Full Name (Only on Sign Up) -->
-            <div class="form-group" id="authNameGroup" style="display:none;">
-              <label class="form-label">Full Name <span class="required">*</span></label>
-              <input type="text" id="authNameInput" class="form-input" placeholder="e.g. Karthik Ramaswamy">
+            <div style="margin-bottom:1rem;">
+              <button class="btn btn-secondary btn-sm" onclick="window.LendApp.goToAuthStage('welcome')" style="padding:0.25rem 0.55rem; font-size:0.75rem; margin-bottom:0.75rem;">
+                ← Back to Welcome
+              </button>
             </div>
 
-            <!-- Email Identifier -->
-            <div class="form-group" id="authEmailGroup">
-              <label class="form-label">Email Address <span class="required">*</span></label>
-              <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com">
+            <!-- View Navigation Tabs -->
+            <div class="auth-nav-tabs">
+              <button class="auth-nav-btn active" id="tabBtnSignIn" onclick="window.LendApp.setAuthView('signin')">Sign In</button>
+              <button class="auth-nav-btn" id="tabBtnSignUp" onclick="window.LendApp.setAuthView('signup')">Create Account</button>
+              <button class="auth-nav-btn" id="tabBtnForgot" onclick="window.LendApp.setAuthView('forgot')">Forgot Password</button>
             </div>
 
-            <!-- Mobile Phone Identifier -->
-            <div class="form-group" id="authPhoneGroup" style="display:none;">
-              <label class="form-label">Mobile Phone Number <span class="required">*</span></label>
-              <input type="tel" id="authPhoneInput" class="form-input" placeholder="+1 (555) 019-9234">
-            </div>
-
-            <!-- Password Field -->
-            <div class="form-group" id="authPasswordGroup">
-              <div class="flex-between">
-                <label class="form-label" id="authPasswordLabel">Password <span class="required">*</span></label>
-                <a href="#" style="font-size:0.75rem; color:var(--accent-primary); text-decoration:none;" id="linkForgotPassInline" onclick="window.LendApp.setAuthView('forgot')">Forgot?</a>
+            <!-- 3-Attempt Lockout Banner -->
+            <div class="lockout-banner" id="authLockoutBanner" style="display:none;">
+              <span style="font-size:1.3rem;">🔒</span>
+              <div>
+                <strong>Too many failed attempts!</strong>
+                <div>Locked for security. Try again in <span class="lockout-countdown" id="lockoutTimerText">00:60</span></div>
               </div>
-              <div class="input-prefix-wrap" style="position:relative;">
-                <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" style="padding-right:2.5rem;">
-                <button type="button" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="window.LendApp.togglePasswordVisibility('authPasswordInput')">👁️</button>
+            </div>
+
+            <!-- Simulated OTP Notification Banner -->
+            <div class="otp-sim-banner" id="otpSimBanner" style="display:none;">
+              <div>
+                <span>Verification OTP: </span>
+                <span class="otp-sim-code" id="otpSimCodeDisplay" onclick="window.LendApp.autoFillOTP()" title="Click to auto-fill">123456</span>
               </div>
-              
-              <!-- Password Strength Meter (On Sign Up) -->
-              <div class="password-strength-container" id="passStrengthContainer" style="display:none;">
-                <div class="strength-bar-bg">
-                  <div class="strength-bar-fill" id="passStrengthFill"></div>
-                </div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">(Expires in 2m)</span>
+            </div>
+
+            <!-- Channel Selector: Email vs Phone -->
+            <div class="pill-selector-group" id="channelSelectorGroup">
+              <button type="button" class="pill-option active" id="pillEmail" onclick="window.LendApp.setAuthChannel('email')">
+                <span>✉️</span> Email Address
+              </button>
+              <button type="button" class="pill-option" id="pillPhone" onclick="window.LendApp.setAuthChannel('phone')">
+                <span>📱</span> Mobile Number
+              </button>
+            </div>
+
+            <!-- Verification Mode: Password vs OTP (Shown on Sign In) -->
+            <div class="pill-selector-group" id="modeSelectorGroup">
+              <button type="button" class="pill-option active" id="pillPassword" onclick="window.LendApp.setAuthMode('password')">
+                <span>🔑</span> Password
+              </button>
+              <button type="button" class="pill-option" id="pillOTP" onclick="window.LendApp.setAuthMode('otp')">
+                <span>📲</span> 6-Digit OTP
+              </button>
+            </div>
+
+            <!-- Master Auth Form -->
+            <form id="masterAuthForm" onsubmit="window.LendApp.handleAuthSubmit(event)">
+
+              <!-- Email Identifier -->
+              <div class="form-group" id="authEmailGroup">
+                <label class="form-label">Email Address <span class="required">*</span></label>
+                <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com">
+              </div>
+
+              <!-- Mobile Phone Identifier -->
+              <div class="form-group" id="authPhoneGroup" style="display:none;">
+                <label class="form-label">Mobile Phone Number <span class="required">*</span></label>
+                <input type="tel" id="authPhoneInput" class="form-input" placeholder="+1 (555) 019-9234">
+              </div>
+
+              <!-- Password Field -->
+              <div class="form-group" id="authPasswordGroup">
                 <div class="flex-between">
-                  <span class="strength-label-text" id="passStrengthLabel">Strength: None</span>
-                  <span style="font-size:0.7rem; color:var(--text-muted);">Use 8+ chars with uppercase, numbers & symbols</span>
+                  <label class="form-label" id="authPasswordLabel">Password <span class="required">*</span></label>
+                  <a href="#" style="font-size:0.75rem; color:var(--accent-primary); text-decoration:none;" id="linkForgotPassInline" onclick="window.LendApp.setAuthView('forgot')">Forgot?</a>
+                </div>
+                <div class="input-prefix-wrap" style="position:relative;">
+                  <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" style="padding-right:2.5rem;">
+                  <button type="button" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="window.LendApp.togglePasswordVisibility('authPasswordInput')">👁️</button>
+                </div>
+                
+                <!-- Password Strength Meter (On Sign Up) -->
+                <div class="password-strength-container" id="passStrengthContainer" style="display:none;">
+                  <div class="strength-bar-bg">
+                    <div class="strength-bar-fill" id="passStrengthFill"></div>
+                  </div>
+                  <div class="flex-between">
+                    <span class="strength-label-text" id="passStrengthLabel">Strength: None</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">Use 8+ chars</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Confirm Password (Only on Sign Up / Reset) -->
-            <div class="form-group" id="authConfirmPasswordGroup" style="display:none;">
-              <label class="form-label">Confirm Password <span class="required">*</span></label>
-              <input type="password" id="authConfirmPasswordInput" class="form-input" placeholder="••••••••">
-            </div>
-
-            <!-- 6-Box OTP Verification Group (When Mode is OTP or Resetting) -->
-            <div id="authOTPSection" style="display:none;">
-              <div class="flex-between">
-                <label class="form-label" style="margin-bottom:0;">Enter 6-Digit Verification Code</label>
-                <button type="button" class="btn btn-outline-emerald btn-sm" id="btnRequestOTP" onclick="window.LendApp.requestOTP()" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
-                  📨 Send Code
-                </button>
-              </div>
-              
-              <div class="otp-input-group" id="otpBoxContainer">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="0">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="1">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="2">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="3">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="4">
-                <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="5">
+              <!-- Confirm Password (Only on Sign Up / Reset) -->
+              <div class="form-group" id="authConfirmPasswordGroup" style="display:none;">
+                <label class="form-label">Confirm Password <span class="required">*</span></label>
+                <input type="password" id="authConfirmPasswordInput" class="form-input" placeholder="••••••••">
               </div>
 
-              <div class="otp-timer-row">
-                <span>Didn't receive code?</span>
-                <button type="button" class="btn-resend-otp" id="btnResendOTP" onclick="window.LendApp.requestOTP()">
-                  Resend OTP <span id="otpResendTimerSpan"></span>
-                </button>
+              <!-- 6-Box OTP Verification Group (When Mode is OTP or Resetting) -->
+              <div id="authOTPSection" style="display:none;">
+                <div class="flex-between">
+                  <label class="form-label" style="margin-bottom:0;">Enter 6-Digit Verification Code</label>
+                  <button type="button" class="btn btn-outline-emerald btn-sm" id="btnRequestOTP" onclick="window.LendApp.requestOTP()" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
+                    📨 Send Code
+                  </button>
+                </div>
+                
+                <div class="otp-input-group" id="otpBoxContainer">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="0">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="1">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="2">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="3">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="4">
+                  <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-idx="5">
+                </div>
+
+                <div class="otp-timer-row">
+                  <span>Didn't receive code?</span>
+                  <button type="button" class="btn-resend-otp" id="btnResendOTP" onclick="window.LendApp.requestOTP()">
+                    Resend OTP <span id="otpResendTimerSpan"></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember Me Checkbox -->
+              <div class="form-group" id="rememberMeGroup">
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--text-secondary); cursor:pointer;">
+                  <input type="checkbox" id="chkRememberMe" checked>
+                  <span>Remember this device for 30 days</span>
+                </label>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width:100%; padding:0.85rem; font-size:0.95rem; margin-bottom:1rem;">
+                Sign In to Vault
+              </button>
+
+            </form>
+          </div>
+
+          <!-- ================= STAGE 3: MINIMAL PROFILE SETUP (UNDER 15s) ================= -->
+          <div class="onboarding-stage" id="stageProfile">
+            <div class="step-indicator-bar">
+              <span>Step 1 of 2: Profile</span>
+              <div class="step-indicator-dots">
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
               </div>
             </div>
 
-            <!-- Remember Me / Terms Checkbox -->
-            <div class="form-group" id="rememberMeGroup">
-              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--text-secondary); cursor:pointer;">
-                <input type="checkbox" id="chkRememberMe" checked>
-                <span>Remember this device for 30 days</span>
-              </label>
+            <h2 class="welcome-title" style="font-size:1.45rem;">Set Up Your Profile</h2>
+            <p class="welcome-desc" style="margin-bottom:1.5rem;">
+              We only ask what is necessary to personalize your IOU receipts and loan calculations.
+            </p>
+
+            <form id="profileSetupForm" onsubmit="window.LendApp.handleProfileSetupSubmit(event)">
+              <div class="form-group">
+                <label class="form-label">Your Name / Nickname <span class="required">*</span></label>
+                <input type="text" id="profileNameInput" class="form-input" placeholder="e.g. Karthik" required>
+                <div class="input-hint">Used on your shareable WhatsApp reminders & IOU statements.</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Default Currency <span class="required">*</span></label>
+                <select id="profileCurrencySelect" class="form-select">
+                  <option value="₹" selected>₹ INR - Indian Rupee</option>
+                  <option value="$">$ USD - US Dollar</option>
+                  <option value="€">€ EUR - Euro</option>
+                  <option value="£">£ GBP - British Pound</option>
+                  <option value="C$">C$ CAD - Canadian Dollar</option>
+                  <option value="A$">A$ AUD - Australian Dollar</option>
+                  <option value="AED">AED - UAE Dirham</option>
+                  <option value="SGD">SGD - Singapore Dollar</option>
+                </select>
+                <div class="input-hint">All loan cards & calculator figures will default to this currency.</div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width:100%; padding:0.85rem; margin-top:1rem;">
+                Continue to Security Checkpoint ➔
+              </button>
+            </form>
+          </div>
+
+          <!-- ================= STAGE 4: BIOMETRIC / QUICK PIN (YES / NO) ================= -->
+          <div class="onboarding-stage" id="stageBiometric">
+            <div class="step-indicator-bar">
+              <span>Step 2 of 2: Quick Security</span>
+              <div class="step-indicator-dots">
+                <div class="step-dot active"></div>
+                <div class="step-dot active"></div>
+              </div>
             </div>
 
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width:100%; padding:0.85rem; font-size:0.95rem; margin-bottom:1rem;">
-              Sign In to Vault
-            </button>
+            <div class="biometric-card">
+              <div class="biometric-icon-wrap">🛡️</div>
+              <h3 style="font-size:1.25rem; font-weight:800; margin-bottom:0.35rem;">Enable Quick Security?</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
+                Protect your personal loans and financial numbers from prying eyes when your device is unlocked.
+              </p>
+            </div>
 
-            <!-- 1-Click Demo / Guest Access -->
-            <button type="button" class="btn btn-secondary" onclick="window.LendApp.quickDemoLogin()" style="width:100%; font-size:0.85rem; border-style:dashed;">
-              ⚡ Quick Demo Access (1-Click)
-            </button>
-
-          </form>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <button type="button" class="btn btn-primary" style="padding:0.85rem;" onclick="window.LendApp.handleBiometricChoice(true)">
+                🔒 Yes, Enable 4-Digit Quick PIN / Biometric
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding:0.75rem;" onclick="window.LendApp.handleBiometricChoice(false)">
+                Skip for Now & Open Dashboard ➔
+              </button>
+            </div>
+          </div>
 
         </div>
       </div>

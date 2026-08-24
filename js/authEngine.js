@@ -326,6 +326,9 @@ class AuthEngine {
       email: cleanEmail,
       phone: cleanPhone,
       passwordHash: password,
+      currency: '$',
+      biometricEnabled: false,
+      hasCompletedOnboarding: false,
       createdAt: new Date().toISOString()
     };
 
@@ -338,6 +341,49 @@ class AuthEngine {
     }
 
     return newUser;
+  }
+
+  updateProfile(name, currency) {
+    const session = this.getSession();
+    if (!session) return null;
+
+    let users = this.getUsers();
+    let user = users.find(u => u.id === session.id);
+    if (user) {
+      user.name = name.trim() || user.name;
+      user.currency = currency || user.currency || '$';
+      user.hasCompletedOnboarding = true;
+      this.saveUsers(users);
+      this.setSession(user, true);
+
+      if (window.Security) {
+        window.Security.logAudit('PROFILE_UPDATED', `Profile updated: Name=${user.name}, Currency=${user.currency}`);
+      }
+      return user;
+    }
+    return null;
+  }
+
+  setBiometricPreference(enabled, pin = null) {
+    const session = this.getSession();
+    if (!session) return;
+
+    let users = this.getUsers();
+    let user = users.find(u => u.id === session.id);
+    if (user) {
+      user.biometricEnabled = !!enabled;
+      if (pin && pin.length >= 4) {
+        user.pin = pin;
+        window.Security.setMasterPin(pin);
+      }
+      user.hasCompletedOnboarding = true;
+      this.saveUsers(users);
+      this.setSession(user, true);
+
+      if (window.Security) {
+        window.Security.logAudit('SECURITY_BIOMETRIC_PREF', `Biometric/Quick Security set to ${enabled ? 'Enabled' : 'Disabled'}`);
+      }
+    }
   }
 
   async resetPassword(identifier, newPassword) {
