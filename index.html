@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LendGuard - Secure Personal Loan & Debt Tracker</title>
+  <meta name="description" content="Never forget money lent or borrowed. Track principal, interest, tenures, partial repayments, polite reminders, and encrypted security controls.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/reminders.css">
+  <link rel="stylesheet" href="css/security.css">
+</head>
+<body>
+
+  <!-- ================= MASTER PIN LOCK SCREEN ================= -->
+  <div class="lock-screen-overlay hidden" id="lockScreenOverlay">
+    <div class="lock-box">
+      <div class="lock-icon-badge">🛡️</div>
+      <h2 class="lock-title">LendGuard Vault</h2>
+      <p class="lock-sub">Enter your 4-digit Master PIN to unlock</p>
+
+      <div class="pin-dots">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <div class="keypad-grid" id="pinKeypad">
+        <button class="keypad-btn" data-key="1">1</button>
+        <button class="keypad-btn" data-key="2">2</button>
+        <button class="keypad-btn" data-key="3">3</button>
+        <button class="keypad-btn" data-key="4">4</button>
+        <button class="keypad-btn" data-key="5">5</button>
+        <button class="keypad-btn" data-key="6">6</button>
+        <button class="keypad-btn" data-key="7">7</button>
+        <button class="keypad-btn" data-key="8">8</button>
+        <button class="keypad-btn" data-key="9">9</button>
+        <button class="keypad-btn action-btn" data-key="clear">Clear</button>
+        <button class="keypad-btn" data-key="0">0</button>
+        <button class="keypad-btn action-btn" data-key="backspace">⌫</button>
+      </div>
+
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:1rem;">
+        Default PIN is <strong style="color:var(--accent-primary);">1234</strong> (Customizable in Security Center)
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <div class="app-container">
+    
+    <!-- Topbar Navigation -->
+    <header class="topbar">
+      <div class="brand-group">
+        <div class="brand-logo">🛡️</div>
+        <div class="brand-info">
+          <h1>LendGuard <span class="brand-badge">PRO SECURE</span></h1>
+          <p>Personal Loan, IOU & Debt Management Platform</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn btn-secondary btn-sm" id="btnOpenSupabaseModal" title="Configure Supabase Cloud Sync">
+          <span id="cloudStatusBadge">☁️ Supabase Cloud</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btnToggleTheme" title="Toggle between Dark and Light theme">
+          ☀️ Light Mode
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btnTogglePrivacy" title="Toggle privacy mode to hide balances from onlookers">
+          👁️ Mask Balances
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btnLockNow" title="Instantly lock with PIN">
+          🔒 Lock App
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="dashboard">
+        <span class="tab-icon">📊</span>
+        <span>Dashboard & Loans</span>
+      </button>
+      <button class="nav-tab" data-view="calculator">
+        <span class="tab-icon">🧮</span>
+        <span>Loan & EMI Calculator</span>
+      </button>
+      <button class="nav-tab" data-view="security">
+        <span class="tab-icon">🛡️</span>
+        <span>Security Center & Audit</span>
+      </button>
+    </nav>
+
+    <!-- ================= VIEW 1: DASHBOARD ================= -->
+    <main class="view-panel active" id="view-dashboard">
+      
+      <!-- Financial Metric Cards -->
+      <section class="stats-grid">
+        <div class="stat-card stat-lent">
+          <div class="stat-top">
+            <span class="stat-label">Total Lent</span>
+            <div class="stat-icon-wrap">↗️</div>
+          </div>
+          <div class="stat-value text-emerald privacy-maskable" id="statTotalLent">$0.00</div>
+          <div class="stat-subtext">Original Principal Disbursed</div>
+        </div>
+
+        <div class="stat-card stat-recovered">
+          <div class="stat-top">
+            <span class="stat-label">Total Recovered</span>
+            <div class="stat-icon-wrap">💰</div>
+          </div>
+          <div class="stat-value text-cyan privacy-maskable" id="statTotalRecovered">$0.00</div>
+          <div class="stat-subtext">Repayments Received</div>
+        </div>
+
+        <div class="stat-card stat-pending">
+          <div class="stat-top">
+            <span class="stat-label">Outstanding Balance</span>
+            <div class="stat-icon-wrap">⏳</div>
+          </div>
+          <div class="stat-value text-amber privacy-maskable" id="statTotalPending">$0.00</div>
+          <div class="stat-subtext">Remaining To Collect</div>
+        </div>
+
+        <div class="stat-card stat-interest">
+          <div class="stat-top">
+            <span class="stat-label">Expected Interest</span>
+            <div class="stat-icon-wrap">📈</div>
+          </div>
+          <div class="stat-value text-indigo privacy-maskable" id="statTotalInterest">$0.00</div>
+          <div class="stat-subtext">Accrued / Agreed Growth</div>
+        </div>
+      </section>
+
+      <!-- Control Bar: Search, Filters & Add -->
+      <section class="control-bar">
+        <div class="search-filter-group">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="loanSearchInput" placeholder="Search by name, tag, or note...">
+          </div>
+
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all">All</button>
+            <button class="filter-pill" data-filter="lent">You Lent</button>
+            <button class="filter-pill" data-filter="borrowed">You Borrowed</button>
+            <button class="filter-pill" data-filter="partially_paid">Partially Paid</button>
+            <button class="filter-pill" data-filter="overdue">⚠️ Overdue</button>
+            <button class="filter-pill" data-filter="settled">Settled</button>
+            <button class="filter-pill" data-filter="friend">Friends</button>
+            <button class="filter-pill" data-filter="family">Family</button>
+            <button class="filter-pill" data-filter="business">Business</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btnOpenAddLoan">
+          <span>+</span>
+          <span>Record New Loan</span>
+        </button>
+      </section>
+
+      <!-- Loan Cards Grid -->
+      <section class="loans-grid" id="loansGrid">
+        <!-- Rendered dynamically by app.js -->
+      </section>
+
+    </main>
+
+    <!-- ================= VIEW 2: STANDALONE CALCULATOR ================= -->
+    <section class="view-panel" id="view-calculator">
+      <div class="card" style="margin-bottom:2rem;">
+        <h2 style="font-size:1.3rem; margin-bottom:0.5rem;">Interactive Loan & EMI Calculator</h2>
+        <p style="color:var(--text-secondary); font-size:0.875rem; margin-bottom:1.5rem;">
+          Simulate loan payments, monthly interest compounding, and preview the full amortization schedule.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:2rem;">
+          <div>
+            <!-- Principal Slider -->
+            <div class="form-group">
+              <div class="flex-between" style="margin-bottom:0.4rem;">
+                <label class="form-label" style="margin-bottom:0;">Loan Principal Amount ($)</label>
+                <input type="number" id="calcPrincipalInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="10000" min="100" max="1000000" step="100">
+              </div>
+              <input type="range" id="calcPrincipalRange" class="range-slider" min="500" max="100000" step="500" value="10000">
+            </div>
+
+            <!-- Interest Rate Slider -->
+            <div class="form-group">
+              <div class="flex-between" style="margin-bottom:0.4rem;">
+                <label class="form-label" style="margin-bottom:0;">Interest Rate (% Annual)</label>
+                <input type="number" id="calcRateInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="8" min="0" max="50" step="0.5">
+              </div>
+              <input type="range" id="calcRateRange" class="range-slider" min="0" max="36" step="0.5" value="8">
+            </div>
+
+            <!-- Tenure Slider -->
+            <div class="form-group">
+              <div class="flex-between" style="margin-bottom:0.4rem;">
+                <label class="form-label" style="margin-bottom:0;">Tenure (Months)</label>
+                <input type="number" id="calcTenureInput" class="form-input" style="width:120px; padding:0.4rem 0.6rem;" value="12" min="1" max="120">
+              </div>
+              <input type="range" id="calcTenureRange" class="range-slider" min="1" max="60" step="1" value="12">
+            </div>
+          </div>
+
+          <!-- Calculation Outputs -->
+          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:1.5rem; display:flex; flex-direction:column; justify-content:center;">
+            <div style="text-align:center; margin-bottom:1.5rem;">
+              <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Estimated Monthly Installment (EMI)</div>
+              <div style="font-size:2.4rem; font-weight:800; color:var(--accent-primary); font-family:var(--font-mono);" id="calcResultEMI">$869.88</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-around; border-top:1px solid var(--border-subtle); padding-top:1rem;">
+              <div style="text-align:center;">
+                <div style="font-size:0.75rem; color:var(--text-muted);">Total Interest</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--status-partial);" id="calcResultInterest">$438.61</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:0.75rem; color:var(--text-muted);">Total Repayment</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--text-primary);" id="calcResultTotal">$10,438.61</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size:1.1rem; margin-top:2rem; margin-bottom:1rem;">First 12 Months Amortization Breakdown</h3>
+        <div class="audit-table-wrap">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Monthly EMI</th>
+                <th>Principal Part</th>
+                <th>Interest Part</th>
+                <th>Remaining Balance</th>
+              </tr>
+            </thead>
+            <tbody id="calcScheduleTbody">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: SECURITY CENTER ================= -->
+    <section class="view-panel" id="view-security">
+      
+      <div class="security-metrics-grid">
+        <div class="security-score-card">
+          <div class="score-circle">100%</div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:0.25rem;">Security & Privacy Guard</h3>
+            <p style="font-size:0.8rem; color:var(--text-secondary);">
+              Zero-Knowledge architecture active. All sensitive loan parameters and contacts remain exclusively on your local device.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem;">Active Security Controls</h4>
+          <div class="security-checklist">
+            <div class="check-item">
+              <span class="check-icon">✓</span>
+              <span>4-Digit Master PIN Lock Screen with Brute Force Protection</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">✓</span>
+              <span>SHA-256 Tamper-Evident Transaction Ledger</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">✓</span>
+              <span>Instant Privacy Mode (Financial Balance Masking)</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">✓</span>
+              <span>Encrypted Local Persistence & Zero Cloud Leakage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+        
+        <!-- PIN & Inactivity Settings -->
+        <div class="card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem;">Vault Access & PIN Settings</h3>
+          <form id="securitySettingsForm">
+            <div class="form-group">
+              <label class="form-label">Change Master PIN (4 digits)</label>
+              <input type="password" id="newPinInput" class="form-input" placeholder="Enter new 4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New PIN</label>
+              <input type="password" id="confirmPinInput" class="form-input" placeholder="Re-type new PIN" maxlength="4" pattern="[0-9]{4}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Inactivity Auto-Lock Timeout</label>
+              <select id="inactivityTimeoutSelect" class="form-select">
+                <option value="1">1 Minute</option>
+                <option value="2">2 Minutes</option>
+                <option value="5" selected>5 Minutes (Recommended)</option>
+                <option value="10">10 Minutes</option>
+                <option value="0">Disabled (Manual Lock Only)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Save Security Preferences</button>
+          </form>
+        </div>
+
+        <!-- Encrypted Backup & Restore -->
+        <div class="card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:0.5rem;">Backup & Data Portability</h3>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">
+            Export your entire loan history and audit ledger into a verified backup file, or restore from a previous backup.
+          </p>
+          
+          <button class="btn btn-outline-emerald" id="btnExportBackup" style="width:100%; margin-bottom:1rem;">
+            📥 Export Encrypted JSON Backup
+          </button>
+
+          <div style="border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <label class="form-label">Restore from Backup File</label>
+            <input type="file" id="backupFileInput" accept=".json" class="form-input" style="padding:0.5rem;">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tamper-Evident SHA-256 Audit Trail -->
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">Tamper-Evident Transaction Ledger</h3>
+            <p style="font-size:0.8rem; color:var(--text-secondary);">
+              Every loan creation, edit, repayment, and authentication is cryptographically hashed with SHA-256 block linking.
+            </p>
+          </div>
+          <span class="badge badge-active">Cryptographically Linked</span>
+        </div>
+
+        <div class="audit-table-wrap">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>Previous Block</th>
+                <th>SHA-256 Digest</th>
+              </tr>
+            </thead>
+            <tbody id="auditTrailTbody">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal 1: Add / Edit Loan -->
+  <div class="modal-overlay" id="loanModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="loanModalTitle">Record New Loan / IOU</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('loanModal')">&times;</button>
+      </div>
+      <form id="loanForm">
+        <input type="hidden" id="loanEditId">
+        <div class="modal-body">
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Agreement Direction <span class="required">*</span></label>
+              <select id="loanType" class="form-select" required>
+                <option value="lent">I Lent Money (They owe me)</option>
+                <option value="borrowed">I Borrowed Money (I owe them)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Relationship Tag</label>
+              <select id="borrowerTag" class="form-select">
+                <option value="Friend">Friend</option>
+                <option value="Family">Family</option>
+                <option value="Colleague">Colleague</option>
+                <option value="Business">Business</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contact / Borrower Name <span class="required">*</span></label>
+            <input type="text" id="borrowerName" class="form-input" placeholder="e.g. Marcus Vance" required>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Phone (for WhatsApp Reminders)</label>
+              <input type="tel" id="borrowerPhone" class="form-input" placeholder="+1-555-0199">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address (Optional)</label>
+              <input type="email" id="borrowerEmail" class="form-input" placeholder="name@email.com">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Principal Amount <span class="required">*</span></label>
+              <div class="input-prefix-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="loanPrincipal" class="form-input" placeholder="1000" min="1" step="any" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Currency</label>
+              <select id="loanCurrency" class="form-select">
+                <option value="$">USD ($)</option>
+                <option value="₹">INR (₹)</option>
+                <option value="€">EUR (€)</option>
+                <option value="£">GBP (£)</option>
+                <option value="C$">CAD (C$)</option>
+                <option value="A$">AUD (A$)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Interest Model Selection -->
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Interest Model</label>
+              <select id="loanInterestType" class="form-select">
+                <option value="none">0% Interest (Friendly / Family)</option>
+                <option value="simple">Simple Interest (Annual %)</option>
+                <option value="monthly">Monthly Rate (e.g. 1.5% / month)</option>
+                <option value="compound">Compound Interest (Monthly)</option>
+                <option value="fixed_fee">Fixed Flat Fee (e.g. $100 agreed)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Rate / Fee</label>
+              <input type="number" id="loanInterestRate" class="form-input" placeholder="0" min="0" step="0.1" value="0">
+            </div>
+          </div>
+
+          <!-- Dates & Tenure -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input type="date" id="loanStartDate" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Due Date</label>
+              <input type="date" id="loanDueDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tenure (Mo.)</label>
+              <input type="number" id="loanTenureMonths" class="form-input" value="3" min="1" max="120">
+            </div>
+          </div>
+
+          <!-- Dynamic Live Calculation Preview -->
+          <div id="loanCalcPreview" style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.25); border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1.25rem;">
+            <!-- Populated via JS -->
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Agreement Notes / Purpose (Private)</label>
+            <textarea id="loanNotes" class="form-textarea" rows="2" placeholder="e.g. Bridge loan for studio renovations, agreed to return in 2 parts..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('loanModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Loan Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Record Partial Payment -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="modal-container" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Repayment</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('paymentModal')">&times;</button>
+      </div>
+      <form id="paymentForm">
+        <div class="modal-body">
+          <div style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
+            <div style="font-size:0.8rem; color:var(--text-muted);">Borrower:</div>
+            <div style="font-size:1.1rem; font-weight:700;" id="payBorrowerName">-</div>
+            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; font-size:0.85rem;">
+              <span>Outstanding Balance:</span>
+              <strong style="color:var(--accent-primary);" id="payOutstandingAmount">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Amount Received <span class="required">*</span></label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">$</span>
+              <input type="number" id="payAmountInput" class="form-input" placeholder="e.g. 500" min="0.01" step="any" required>
+            </div>
+            <div class="input-hint">Partial payments will automatically reduce remaining principal.</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Payment Date</label>
+              <input type="date" id="payDateInput" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payment Method</label>
+              <select id="payMethodSelect" class="form-select">
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="Zelle">Zelle</option>
+                <option value="Venmo">Venmo</option>
+                <option value="UPI">UPI</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Check">Check</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Transaction Ref / Notes</label>
+            <input type="text" id="payNotesInput" class="form-input" placeholder="e.g. Sent via Zelle ref #8892">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('paymentModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Log Repayment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: View Loan Details & Payment History -->
+  <div class="modal-overlay" id="loanDetailModal">
+    <div class="modal-container" style="max-width:680px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Loan Agreement & Payment History</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('loanDetailModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="loanDetailBody">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Reminder Composer -->
+  <div class="modal-overlay" id="reminderModal">
+    <div class="modal-container" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">1-Click Payment Reminder</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('reminderModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+          Sending reminder to <strong id="reminderBorrowerName" style="color:var(--text-primary);">Friend</strong>. Choose tone:
+        </p>
+
+        <div class="reminder-tones">
+          <button class="tone-btn" data-tone="friendly">Friendly 😊</button>
+          <button class="tone-btn active" data-tone="polite">Polite 🤝</button>
+          <button class="tone-btn" data-tone="formal">Formal 📋</button>
+          <button class="tone-btn" data-tone="urgent">Urgent ⚠️</button>
+        </div>
+
+        <div class="reminder-preview-box">
+          <div class="reminder-message-text" id="reminderMessageText"></div>
+        </div>
+
+        <div class="reminder-channel-actions">
+          <a href="#" target="_blank" class="btn btn-whatsapp" id="btnSendWhatsApp">
+            <span>💬</span> WhatsApp
+          </a>
+          <button class="btn btn-secondary" onclick="window.LendApp.copyReminderText()">
+            <span>📋</span> Copy Text
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('reminderModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Digital IOU & Printable Receipt -->
+  <div class="modal-overlay" id="iouModal">
+    <div class="modal-container" style="max-width:720px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Digital IOU & Verified Receipt</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('iouModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="iouReceiptContainer">
+        <!-- Rendered by app.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('iouModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.LendApp.printReceipt()">🖨️ Print / Save as PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Supabase Cloud Sync & Auth -->
+  <div class="modal-overlay" id="supabaseModal">
+    <div class="modal-container" style="max-width:560px;">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ Supabase Cloud Sync</h3>
+        <button class="modal-close" onclick="window.LendApp.closeModal('supabaseModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Tab Switcher: Credentials vs Account -->
+        <div id="supabaseConfigSection">
+          <div style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem; font-size:0.85rem;">
+            <strong>PostgreSQL + Row-Level Security (RLS)</strong>
+            <p style="color:var(--text-secondary); margin-top:4px;">
+              Connect your own Supabase project for instant multi-device syncing. If not configured, LendGuard runs offline using your local encrypted vault.
+            </p>
+          </div>
+
+          <form id="supabaseCredsForm">
+            <div class="form-group">
+              <label class="form-label">Supabase Project URL</label>
+              <input type="url" id="supabaseUrlInput" class="form-input" placeholder="https://your-project-id.supabase.co" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Supabase Anon Public Key</label>
+              <input type="password" id="supabaseKeyInput" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:0.5rem;">Connect Supabase Project</button>
+          </form>
+        </div>
+
+        <!-- Auth Section (Shown after credentials connected) -->
+        <div id="supabaseAuthSection" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); padding:0.85rem 1rem; border-radius:var(--radius-md); margin-bottom:1.25rem;">
+            <div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">CONNECTED PROJECT</div>
+              <strong id="connectedProjectUrl" style="font-size:0.85rem; color:var(--accent-primary); word-break:break-all;">-</strong>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="window.LendApp.disconnectSupabase()">Disconnect</button>
+          </div>
+
+          <div id="supabaseUserLoggedOut">
+            <h4 style="font-size:0.95rem; margin-bottom:0.75rem;">Account Sign In / Register</h4>
+            <form id="supabaseAuthForm">
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="supabaseEmailInput" class="form-input" placeholder="you@example.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="supabasePasswordInput" class="form-input" placeholder="••••••••" required>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <button type="button" class="btn btn-primary" onclick="window.LendApp.handleSupabaseSignIn()">Sign In</button>
+                <button type="button" class="btn btn-secondary" onclick="window.LendApp.handleSupabaseSignUp()">Create Account</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="supabaseUserLoggedIn" style="display:none; text-align:center; padding:1rem 0;">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">✅</div>
+            <h4 style="font-size:1.1rem; margin-bottom:0.25rem;">Cloud Sync Active</h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" id="supabaseUserEmailDisplay">-</p>
+
+            <button class="btn btn-primary" style="width:100%; margin-bottom:0.75rem;" onclick="window.LendApp.triggerManualSync()">
+              🔄 Sync All Data Now
+            </button>
+            <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="window.LendApp.handleSupabaseSignOut()">
+              Sign Out
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.LendApp.closeModal('supabaseModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Supabase CDN (Ultra-lightweight browser client) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Application Scripts -->
+  <script src="js/security.js"></script>
+  <script src="js/loanEngine.js"></script>
+  <script src="js/reminderEngine.js"></script>
+  <script src="js/demoData.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
