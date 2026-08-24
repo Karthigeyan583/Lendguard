@@ -145,17 +145,12 @@
           <!-- ================= STAGE 2: AUTHENTICATION (SIGN IN / SIGN UP) ================= -->
           <div class="onboarding-stage" id="stageAuth">
             
-            <div style="margin-bottom:1rem;">
+            <div style="margin-bottom:1.25rem;">
               <button class="btn btn-secondary btn-sm" onclick="window.LendApp.goToAuthStage('welcome')" style="padding:0.25rem 0.55rem; font-size:0.75rem; margin-bottom:0.75rem;">
                 ← Back to Welcome
               </button>
-            </div>
-
-            <!-- View Navigation Tabs -->
-            <div class="auth-nav-tabs">
-              <button class="auth-nav-btn active" id="tabBtnSignIn" onclick="window.LendApp.setAuthView('signin')">Sign In</button>
-              <button class="auth-nav-btn" id="tabBtnSignUp" onclick="window.LendApp.setAuthView('signup')">Create Account</button>
-              <button class="auth-nav-btn" id="tabBtnForgot" onclick="window.LendApp.setAuthView('forgot')">Forgot Password</button>
+              <h2 id="authViewTitle" style="font-size:1.45rem; font-weight:800; color:var(--text-primary); margin-bottom:0.25rem;">Create Your Account</h2>
+              <p id="authViewSubtitle" style="font-size:0.85rem; color:var(--text-secondary);">Start tracking your loans in less than 60 seconds.</p>
             </div>
 
             <!-- 3-Attempt Lockout Banner -->
@@ -278,6 +273,11 @@
               <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width:100%; padding:0.85rem; font-size:0.95rem; margin-bottom:1rem;">
                 Sign In to Vault
               </button>
+
+              <!-- Contextual Switcher Link -->
+              <div id="authFooterLinks" style="text-align:center; font-size:0.85rem; color:var(--text-secondary); padding:0.5rem 0;">
+                <!-- Dynamically populated by app.js -->
+              </div>
 
             </form>
           </div>

@@ -1046,10 +1046,10 @@ class LendGuardApp {
   setAuthView(view) {
     window.Auth.view = view;
     
-    // Update Tab Buttons
-    document.getElementById('tabBtnSignIn')?.classList.toggle('active', view === 'signin');
-    document.getElementById('tabBtnSignUp')?.classList.toggle('active', view === 'signup');
-    document.getElementById('tabBtnForgot')?.classList.toggle('active', view === 'forgot');
+    // Header Titles & Subtitles
+    const titleEl = document.getElementById('authViewTitle');
+    const subtitleEl = document.getElementById('authViewSubtitle');
+    const footerLinks = document.getElementById('authFooterLinks');
 
     // Element Visibility
     const nameGroup = document.getElementById('authNameGroup');
@@ -1062,6 +1062,8 @@ class LendGuardApp {
     const passLabel = document.getElementById('authPasswordLabel');
 
     if (view === 'signin') {
+      if (titleEl) titleEl.textContent = 'Welcome Back';
+      if (subtitleEl) subtitleEl.textContent = 'Sign in to access your encrypted lending records.';
       if (nameGroup) nameGroup.style.display = 'none';
       if (confirmGroup) confirmGroup.style.display = 'none';
       if (passStrength) passStrength.style.display = 'none';
@@ -1070,9 +1072,14 @@ class LendGuardApp {
       if (inlineForgot) inlineForgot.style.display = 'inline';
       if (passLabel) passLabel.innerHTML = 'Password <span class="required">*</span>';
       if (submitBtn) submitBtn.textContent = 'Sign In to Vault';
+      if (footerLinks) {
+        footerLinks.innerHTML = `Don't have an account? <a href="#" onclick="window.LendApp.setAuthView('signup')" style="color:var(--accent-primary); font-weight:600; text-decoration:none;">Sign Up Free</a>`;
+      }
       this.setAuthMode(window.Auth.mode);
     } else if (view === 'signup') {
-      if (nameGroup) nameGroup.style.display = 'block';
+      if (titleEl) titleEl.textContent = 'Create Your Account';
+      if (subtitleEl) subtitleEl.textContent = 'Start tracking your loans in less than 60 seconds.';
+      if (nameGroup) nameGroup.style.display = 'none';
       if (confirmGroup) confirmGroup.style.display = 'block';
       if (passStrength) passStrength.style.display = 'block';
       if (modeSelector) modeSelector.style.display = 'none';
@@ -1080,11 +1087,16 @@ class LendGuardApp {
       if (inlineForgot) inlineForgot.style.display = 'none';
       if (passLabel) passLabel.innerHTML = 'Create Password <span class="required">*</span>';
       if (submitBtn) submitBtn.textContent = 'Create Free Account';
+      if (footerLinks) {
+        footerLinks.innerHTML = `Already have an account? <a href="#" onclick="window.LendApp.setAuthView('signin')" style="color:var(--accent-primary); font-weight:600; text-decoration:none;">Sign In</a>`;
+      }
       
       // On signup, show password fields
       document.getElementById('authPasswordGroup').style.display = 'block';
       document.getElementById('authOTPSection').style.display = 'none';
     } else if (view === 'forgot') {
+      if (titleEl) titleEl.textContent = 'Reset Your Password';
+      if (subtitleEl) subtitleEl.textContent = 'Enter your email or mobile to receive a 6-digit recovery OTP.';
       if (nameGroup) nameGroup.style.display = 'none';
       if (confirmGroup) confirmGroup.style.display = 'block';
       if (passStrength) passStrength.style.display = 'none';
@@ -1093,6 +1105,9 @@ class LendGuardApp {
       if (inlineForgot) inlineForgot.style.display = 'none';
       if (passLabel) passLabel.innerHTML = 'Enter New Password <span class="required">*</span>';
       if (submitBtn) submitBtn.textContent = 'Verify OTP & Reset Password';
+      if (footerLinks) {
+        footerLinks.innerHTML = `<a href="#" onclick="window.LendApp.setAuthView('signin')" style="color:var(--accent-primary); font-weight:600; text-decoration:none;">← Back to Sign In</a>`;
+      }
 
       // Forgot password requires OTP verification
       document.getElementById('authPasswordGroup').style.display = 'block';
